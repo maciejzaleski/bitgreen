@@ -201,6 +201,30 @@
       </attribute>
       <layout class="QVBoxLayout" name="verticalLayout_Wallet">
        <item>
+        <layout class="QHBoxLayout" name="horizontalLayout_stakeSplitThreshold">
+         <item>
+          <widget class="QLabel" name="stakeSplitThresholdLabel">
+           <property name="toolTip">
+            <string>Split the stake transaction if the output amount is greater than the specified threshold.</string>
+           </property>
+           <property name="text">
+            <string>Stake split &amp;threshold</string>
+           </property>
+           <property name="buddy">
+            <cstring>stakeSplitThreshold</cstring>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLineEdit" name="stakeSplitThreshold">
+           <property name="toolTip">
+            <string>Split the stake transaction if the output amount is greater than the specified threshold.</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item>
         <widget class="QGroupBox" name="groupBox">
          <property name="title">
           <string>Expert</string>

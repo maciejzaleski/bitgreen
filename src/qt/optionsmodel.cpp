@@ -18,6 +18,11 @@
 #include <netbase.h>
 #include <txdb.h> // for -dbcache defaults
 
+#ifdef ENABLE_WALLET
+#include <wallet/wallet.h>
+#include <wallet/walletdb.h>
+#endif
+
 #include <QNetworkProxy>
 #include <QSettings>
 #include <QStringList>
@@ -113,6 +118,9 @@ void OptionsModel::Init(bool resetSettings)
 
     // Wallet
 #ifdef ENABLE_WALLET
+    if (!settings.contains("nStakeSplitThreshold")) {
+        settings.setValue("nStakeSplitThreshold", 0);
+    }
     if (!settings.contains("bSpendZeroConfChange"))
         settings.setValue("bSpendZeroConfChange", true);
     if (!m_node.softSetBoolArg("-spendzeroconfchange", settings.value("bSpendZeroConfChange").toBool()))
@@ -280,6 +288,10 @@ QVariant OptionsModel::data(const QModelIndex & index, int role) const
             return GetProxySetting(settings, "addrSeparateProxyTor").port;
 
 #ifdef ENABLE_WALLET
+        case StakeSplitThreshold:
+            if (GetMainWallet())
+                return GetMainWallet()->nStakeSplitThreshold;
+            return settings.value("nStakeSplitThreshold");
         case SpendZeroConfChange:
             return settings.value("bSpendZeroConfChange");
 #endif
@@ -449,6 +461,12 @@ bool OptionsModel::setData(const QModelIndex & index, const QVariant & value, in
                 setRestartRequired(true);
             }
             break;
+        case StakeSplitThreshold:
+            if (settings.value("nStakeSplitThreshold") != value) {
+                settings.setValue("nStakeSplitThreshold", value.toInt());
+                setStakeSplitThreshold(value.toInt());
+            }
+            break;
         default:
             break;
         }
@@ -470,6 +488,16 @@ void OptionsModel::setDisplayUnit(const QVariant &value)
         Q_EMIT displayUnitChanged(nDisplayUnit);
     }
 }
+
+#ifdef ENABLE_WALLET
+/* Update StakeSplitThreshold in current default wallet */
+void OptionsModel::setStakeSplitThreshold(int value)
+{
+    auto pwallet = GetMainWallet();
+    pwallet->nStakeSplitThreshold = value;
+    pwallet->SetStakeSplitThreshold(value);
+}
+#endif
 
 bool OptionsModel::getProxySettings(QNetworkProxy& proxy) const
 {

@@ -4191,6 +4191,60 @@ UniValue importprunedfunds(const JSONRPCRequest& request);
 UniValue removeprunedfunds(const JSONRPCRequest& request);
 UniValue importmulti(const JSONRPCRequest& request);
 
+UniValue getstakesplitthreshold(const JSONRPCRequest& request)
+{
+    std::shared_ptr<CWallet> const wallet = GetWalletForJSONRPCRequest(request);
+    CWallet* const pwallet = wallet.get();
+
+    if (!EnsureWalletIsAvailable(pwallet, request.fHelp)) {
+        return NullUniValue;
+    }
+
+    RPCHelpMan{"getstakesplitthreshold",
+        "\nReturns the threshold amount needed to split a stake transaction.\n",
+        {},
+        RPCResult{
+            "value              (numeric) The threshold value used to split a stake transaction for this wallet.\n"
+        },
+        RPCExamples{""}
+    }.Check(request);
+
+    return int(pwallet->nStakeSplitThreshold);
+}
+
+UniValue setstakesplitthreshold(const JSONRPCRequest& request)
+{
+    std::shared_ptr<CWallet> const wallet = GetWalletForJSONRPCRequest(request);
+    CWallet* const pwallet = wallet.get();
+
+    if (!EnsureWalletIsAvailable(pwallet, request.fHelp)) {
+        return NullUniValue;
+    }
+
+    RPCHelpMan{"setstakesplitthreshold",
+        "\nUpdate the threshold amount at which a UTXO will split into 2 outs upon a stake transaction”.\n",
+        {
+            {"value", RPCArg::Type::NUM, RPCArg::Optional::NO, "The updated stake threshold value."},
+        },
+        RPCResult{
+            "value              (numeric) The threshold value used to split a stake transaction for this wallet.\n"
+        },
+        RPCExamples{""}
+    }.Check(request);
+
+    EnsureWalletIsUnlocked(pwallet);
+
+    int value = request.params[0].get_int();
+    if (value > 999999)
+        throw JSONRPCError(RPC_WALLET_ERROR, "Value out of range, max allowed value 999999");
+
+    if (!pwallet->SetStakeSplitThreshold(value))
+        throw JSONRPCError(RPC_WALLET_ERROR, "could not setstakesplitthreshold");
+
+    pwallet->nStakeSplitThreshold = value;
+    return pwallet->nStakeSplitThreshold;
+}
+
 // clang-format off
 static const CRPCCommand commands[] =
 { //  category              name                                actor (function)                argNames
@@ -4251,6 +4305,8 @@ static const CRPCCommand commands[] =
     { "wallet",             "walletpassphrase",                 &walletpassphrase,              {"passphrase","timeout"} },
     { "wallet",             "walletpassphrasechange",           &walletpassphrasechange,        {"oldpassphrase","newpassphrase"} },
     { "wallet",             "walletprocesspsbt",                &walletprocesspsbt,             {"psbt","sign","sighashtype","bip32derivs"} },
+    { "wallet",             "getstakesplitthreshold",           &getstakesplitthreshold,        {} },
+    { "wallet",             "setstakesplitthreshold",           &setstakesplitthreshold,        {"value"} },
 };
 // clang-format on
 

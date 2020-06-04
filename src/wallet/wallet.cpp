@@ -5315,9 +5315,7 @@ bool CWallet::CreateCoinStake(unsigned int nBits,
                 const CBlockIndex* pIndex0 = ChainActive().Tip();
                 uint64_t nTotalSize = pcoin.first->tx->vout[pcoin.second].nValue + nFees + GetBlockSubsidy(pIndex0->nHeight+1, Params().GetConsensus());
 
-                //presstab HyperStake - if MultiSend is set to send in coinstake we will add our outputs here (values asigned further down)
-                // TODO: BitGreen - check if threshold split conflicts with masternode payment.
-                if (nStakeSplitThreshold >= 100 && nTotalSize / 2 > nStakeSplitThreshold * COIN)
+                if (nStakeSplitThreshold > 0 && nTotalSize / 2 > nStakeSplitThreshold * COIN)
                     txNew.vout.push_back(CTxOut(0, scriptPubKeyOut)); //split stake
 
                 LogPrint(BCLog::KERNEL, "%s: added kernel type=%d\n", __func__, whichType);
@@ -5402,6 +5400,13 @@ void CWallet::GetScriptForMining(CScript& script)
         return;
     }
     script = GetScriptForDestination(dest);
+}
+
+bool CWallet::SetStakeSplitThreshold(const int value)
+{
+    LOCK(cs_wallet);
+    WalletBatch batch(*database);
+    return batch.WriteStakeSplitThreshold(value);
 }
 
 bool CWallet::MintableCoins()

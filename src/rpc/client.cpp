@@ -172,6 +172,7 @@ static const CRPCConvertParam vRPCConvertParams[] =
     { "spork", 1, "value" },
     { "getsuperblockbudget", 0, "index"},
     { "stop", 0, "wait" },
+    { "setstakesplitthreshold", 0, "value" },
 };
 // clang-format on
 
