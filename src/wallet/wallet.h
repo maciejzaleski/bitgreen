@@ -1433,12 +1433,14 @@ public:
     /** proof-of-stake */
     int nStakeSetUpdateTime = 300; // 5 minutes
     int nStakeSplitThreshold GUARDED_BY(cs_wallet) = 0;
-    using StakeCoinsSet = std::set<std::pair<const CWalletTx*, unsigned int>>;
+    int nStakeCombineThreshold GUARDED_BY(cs_wallet) = 0;
+    using StakeCoinsSet = std::vector<COutput>;
     bool MintableCoins();
     bool SelectStakeCoins(StakeCoinsSet& setCoins, CAmount nTargetAmount) const;
     bool CreateCoinStake(unsigned int nBits, int64_t nSearchInterval, CMutableTransaction& txNew, uint32_t& nTxNewTime, CAmount nFees);
     void GetScriptForMining(CScript& script);
     bool SetStakeSplitThreshold(const int value);
+    bool SetStakeCombineThreshold(const int value);
 
     void NotifyTransactionLock(const CTransaction &tx);
     void NotifyChainLock(const CBlockIndex* pindexChainLock);

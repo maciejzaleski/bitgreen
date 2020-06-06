@@ -52,6 +52,7 @@ OptionsDialog::OptionsDialog(QWidget *parent, bool enableWallet) :
 #endif
 
     ui->stakeSplitThreshold->setValidator(new QIntValidator(0, 999999, this));
+    ui->stakeCombineThreshold->setValidator(new QIntValidator(0, 999999, this));
 
     ui->proxyIp->setEnabled(false);
     ui->proxyPort->setEnabled(false);
@@ -212,6 +213,7 @@ void OptionsDialog::setMapper()
 
     /* Wallet */
     mapper->addMapping(ui->stakeSplitThreshold, OptionsModel::StakeSplitThreshold);
+    mapper->addMapping(ui->stakeCombineThreshold, OptionsModel::StakeCombineThreshold);
     mapper->addMapping(ui->spendZeroConfChange, OptionsModel::SpendZeroConfChange);
     mapper->addMapping(ui->coinControlFeatures, OptionsModel::CoinControlFeatures);
 

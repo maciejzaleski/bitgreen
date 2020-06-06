@@ -4245,6 +4245,60 @@ UniValue setstakesplitthreshold(const JSONRPCRequest& request)
     return pwallet->nStakeSplitThreshold;
 }
 
+UniValue getstakecombinethreshold(const JSONRPCRequest& request)
+{
+    std::shared_ptr<CWallet> const wallet = GetWalletForJSONRPCRequest(request);
+    CWallet* const pwallet = wallet.get();
+
+    if (!EnsureWalletIsAvailable(pwallet, request.fHelp)) {
+        return NullUniValue;
+    }
+
+    RPCHelpMan{"getstakecombinethreshold",
+        "\nReturns the threshold amount needed to combine a UTXO with a stake transaction.\n",
+        {},
+        RPCResult{
+            "value              (numeric) The threshold value used to combine a stake transaction for this wallet.\n"
+        },
+        RPCExamples{""}
+    }.Check(request);
+
+    return int(pwallet->nStakeCombineThreshold);
+}
+
+UniValue setstakecombinethreshold(const JSONRPCRequest& request)
+{
+    std::shared_ptr<CWallet> const wallet = GetWalletForJSONRPCRequest(request);
+    CWallet* const pwallet = wallet.get();
+
+    if (!EnsureWalletIsAvailable(pwallet, request.fHelp)) {
+        return NullUniValue;
+    }
+
+    RPCHelpMan{"setstakecombinethreshold",
+        "\nUpdate the threshold amount at which a UTXO will combine with a stake transaction”.\n",
+        {
+            {"value", RPCArg::Type::NUM, RPCArg::Optional::NO, "The updated stake combine threshold value."},
+        },
+        RPCResult{
+            "value              (numeric) The threshold value used to combine a stake transaction for this wallet.\n"
+        },
+        RPCExamples{""}
+    }.Check(request);
+
+    EnsureWalletIsUnlocked(pwallet);
+
+    int value = request.params[0].get_int();
+    if (value > 999999)
+        throw JSONRPCError(RPC_WALLET_ERROR, "Value out of range, max allowed value 999999");
+
+    if (!pwallet->SetStakeCombineThreshold(value))
+        throw JSONRPCError(RPC_WALLET_ERROR, "could not setstakecombinethreshold");
+
+    pwallet->nStakeCombineThreshold = value;
+    return pwallet->nStakeCombineThreshold;
+}
+
 // clang-format off
 static const CRPCCommand commands[] =
 { //  category              name                                actor (function)                argNames
@@ -4307,6 +4361,8 @@ static const CRPCCommand commands[] =
     { "wallet",             "walletprocesspsbt",                &walletprocesspsbt,             {"psbt","sign","sighashtype","bip32derivs"} },
     { "wallet",             "getstakesplitthreshold",           &getstakesplitthreshold,        {} },
     { "wallet",             "setstakesplitthreshold",           &setstakesplitthreshold,        {"value"} },
+    { "wallet",             "getstakecombinethreshold",         &getstakecombinethreshold,      {} },
+    { "wallet",             "setstakecombinethreshold",         &setstakecombinethreshold,      {"value"} },
 };
 // clang-format on
 

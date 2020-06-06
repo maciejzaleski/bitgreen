@@ -222,8 +222,9 @@ public:
     /// Erase destination data tuple from wallet database
     bool EraseDestData(const std::string &address, const std::string &key);
 
-    // Stake Split Threshold
+    // Stake Split/Combine Thresholds
     bool WriteStakeSplitThreshold(const int nStakeSplitThreshold);
+    bool WriteStakeCombineThreshold(const int nStakeCombineThreshold);
 
     DBErrors LoadWallet(CWallet* pwallet);
     DBErrors FindWalletTx(std::vector<uint256>& vTxHash, std::vector<CWalletTx>& vWtx);

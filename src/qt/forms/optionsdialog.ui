@@ -225,6 +225,30 @@
         </layout>
        </item>
        <item>
+        <layout class="QHBoxLayout" name="horizontalLayout_stakeCombineThreshold">
+         <item>
+          <widget class="QLabel" name="stakeCombineThresholdLabel">
+           <property name="toolTip">
+            <string>Combine the stake transaction if the UTXO amount is lower than the specified threshold.</string>
+           </property>
+           <property name="text">
+            <string>Stake combine &amp;threshold</string>
+           </property>
+           <property name="buddy">
+            <cstring>stakeCombineThreshold</cstring>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLineEdit" name="stakeCombineThreshold">
+           <property name="toolTip">
+            <string>Combine the stake transaction if the UTXO amount is lower than the specified threshold.</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item>
         <widget class="QGroupBox" name="groupBox">
          <property name="title">
           <string>Expert</string>

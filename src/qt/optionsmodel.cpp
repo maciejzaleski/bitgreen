@@ -118,9 +118,10 @@ void OptionsModel::Init(bool resetSettings)
 
     // Wallet
 #ifdef ENABLE_WALLET
-    if (!settings.contains("nStakeSplitThreshold")) {
+    if (!settings.contains("nStakeSplitThreshold"))
         settings.setValue("nStakeSplitThreshold", 0);
-    }
+    if (!settings.contains("nStakeCombineThreshold"))
+        settings.setValue("nStakeCombineThreshold", 0);
     if (!settings.contains("bSpendZeroConfChange"))
         settings.setValue("bSpendZeroConfChange", true);
     if (!m_node.softSetBoolArg("-spendzeroconfchange", settings.value("bSpendZeroConfChange").toBool()))
@@ -292,6 +293,10 @@ QVariant OptionsModel::data(const QModelIndex & index, int role) const
             if (GetMainWallet())
                 return GetMainWallet()->nStakeSplitThreshold;
             return settings.value("nStakeSplitThreshold");
+        case StakeCombineThreshold:
+            if (GetMainWallet())
+                return GetMainWallet()->nStakeCombineThreshold;
+            return settings.value("nStakeCombineThreshold");
         case SpendZeroConfChange:
             return settings.value("bSpendZeroConfChange");
 #endif
@@ -467,6 +472,12 @@ bool OptionsModel::setData(const QModelIndex & index, const QVariant & value, in
                 setStakeSplitThreshold(value.toInt());
             }
             break;
+        case StakeCombineThreshold:
+            if (settings.value("nStakeCombineThreshold") != value) {
+                settings.setValue("nStakeCombineThreshold", value.toInt());
+                setStakeCombineThreshold(value.toInt());
+            }
+            break;
         default:
             break;
         }
@@ -496,6 +507,14 @@ void OptionsModel::setStakeSplitThreshold(int value)
     auto pwallet = GetMainWallet();
     pwallet->nStakeSplitThreshold = value;
     pwallet->SetStakeSplitThreshold(value);
+}
+
+/* Update StakeCombineThreshold in current default wallet */
+void OptionsModel::setStakeCombineThreshold(int value)
+{
+    auto pwallet = GetMainWallet();
+    pwallet->nStakeCombineThreshold = value;
+    pwallet->SetStakeCombineThreshold(value);
 }
 #endif
 

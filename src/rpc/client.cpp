@@ -173,6 +173,7 @@ static const CRPCConvertParam vRPCConvertParams[] =
     { "getsuperblockbudget", 0, "index"},
     { "stop", 0, "wait" },
     { "setstakesplitthreshold", 0, "value" },
+    { "setstakecombinethreshold", 0, "value" },
 };
 // clang-format on
 

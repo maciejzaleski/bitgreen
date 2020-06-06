@@ -413,6 +413,8 @@ ReadKeyValue(CWallet* pwallet, CDataStream& ssKey, CDataStream& ssValue,
             }
         } else if (strType == "stakest") {
             ssValue >> pwallet->nStakeSplitThreshold;
+        } else if (strType == "stakect") {
+            ssValue >> pwallet->nStakeCombineThreshold;
         } else if (strType != "bestblock" && strType != "bestblock_nomerkle" &&
                 strType != "minversion" && strType != "acentry" && strType != "version") {
             wss.m_unknown_records++;
@@ -757,6 +759,11 @@ bool WalletBatch::EraseDestData(const std::string &address, const std::string &k
 bool WalletBatch::WriteStakeSplitThreshold(const int nStakeSplitThreshold)
 {
     return WriteIC(std::string("stakest"), nStakeSplitThreshold);
+}
+
+bool WalletBatch::WriteStakeCombineThreshold(const int nStakeCombineThreshold)
+{
+    return WriteIC(std::string("stakect"), nStakeCombineThreshold);
 }
 
 bool WalletBatch::WriteHDChain(const CHDChain& chain)

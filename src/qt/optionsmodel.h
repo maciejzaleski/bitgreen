@@ -56,6 +56,7 @@ public:
         SpendZeroConfChange,    // bool
         Listen,                 // bool
         StakeSplitThreshold,    // int
+        StakeCombineThreshold,  // int
         OptionIDRowCount,
     };
 
@@ -69,6 +70,8 @@ public:
     void setDisplayUnit(const QVariant &value);
     /* Update StakeSplitThreshold value in current loaded wallet */
     void setStakeSplitThreshold(int value);
+    /* Update StakeCombineThreshold value in current loaded wallet */
+    void setStakeCombineThreshold(int value);
 
     /* Explicit getters */
     bool getHideTrayIcon() const { return fHideTrayIcon; }
