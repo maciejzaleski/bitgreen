@@ -1552,11 +1552,6 @@ DisconnectResult CChainState::DisconnectBlock(const CBlock& block, const CBlockI
         return DISCONNECT_FAILED;
     }
 
-    LogPrintf("%s: block=%s hashPoS=%s\n", __func__, pindex->GetBlockHash().ToString(), pindex->hashProofOfStake.ToString());
-    auto itRem = std::remove(g_blockman.m_pos_index.begin(), g_blockman.m_pos_index.end(), pindex->hashProofOfStake);
-    if (g_blockman.m_pos_index.end() != itRem)
-        g_blockman.m_pos_index.erase(itRem, g_blockman.m_pos_index.end());
-
     CBlockUndo blockUndo;
     if (!UndoReadFromDisk(blockUndo, pindex)) {
         error("DisconnectBlock(): failure reading undo data");
@@ -1772,19 +1767,13 @@ static int64_t nBlocksTotal = 0;
 /**
  * proof-of-stake
  */
-bool CChainState::PoSContextualBlockChecks(const CBlock& block, CValidationState& state, CBlockIndex* pindex, bool fJustCheck, bool fDuplicateCheck)
+bool CChainState::PoSContextualBlockChecks(const CBlock& block, CValidationState& state, CBlockIndex* pindex, bool fJustCheck)
 {
     uint256 hashProofOfStake = uint256();
     // verify hash target and signature of coinstake tx
     if (block.IsProofOfStake() && !CheckProofOfStake(block, pindex->pprev, hashProofOfStake)) {
         LogPrintf("%s: check proof-of-stake failed for block %s\n", __func__, block.GetHash().ToString());
         return false; // do not error here as we expect this during initial block download
-    }
-
-    // make sure we havent seen this stake previously
-    if (fDuplicateCheck && pindex->nHeight >= Params().GetConsensus().StakeEnforcement() &&
-        std::find(m_blockman.m_pos_index.begin(), m_blockman.m_pos_index.end(), hashProofOfStake) != m_blockman.m_pos_index.end()) {
-        return error(" * already seen this stake (%s), discarding block..", hashProofOfStake.ToString());
     }
 
     // compute stake entropy bit for stake modifier
@@ -1822,9 +1811,6 @@ bool CChainState::PoSContextualBlockChecks(const CBlock& block, CValidationState
     if (fJustCheck)
         return true;
 
-    // set stake hash as seen
-    m_blockman.InsertPoSIndex(hashProofOfStake);
-
     // write everything to index
     if (block.IsProofOfStake())
     {
@@ -1846,14 +1832,14 @@ bool CChainState::PoSContextualBlockChecks(const CBlock& block, CValidationState
  *  Validity checks that depend on the UTXO set are also done; ConnectBlock()
  *  can fail if those validity checks fail (among other reasons). */
 bool CChainState::ConnectBlock(const CBlock& block, CValidationState& state, CBlockIndex* pindex,
-                  CCoinsViewCache& view, const CChainParams& chainparams, bool fJustCheck, bool fDuplicateCheck)
+                  CCoinsViewCache& view, const CChainParams& chainparams, bool fJustCheck)
 {
     AssertLockHeld(cs_main);
     assert(pindex);
     assert(*pindex->phashBlock == block.GetHash());
     int64_t nTimeStart = GetTimeMicros();
 
-    if (pindex->nStakeModifier == 0 && pindex->nStakeModifierChecksum == 0 && !PoSContextualBlockChecks(block, state, pindex, fJustCheck, fDuplicateCheck))
+    if (pindex->nStakeModifier == 0 && pindex->nStakeModifierChecksum == 0 && !PoSContextualBlockChecks(block, state, pindex, fJustCheck))
         return error("%s: failed proof-of-stake checks: %s", __func__, FormatStateMessage(state));
 
     // Check it again in case a previous version let a bad block in
@@ -3957,7 +3943,7 @@ bool TestBlockValidity(CValidationState& state, const CChainParams& chainparams,
         return error("%s: Consensus::CheckBlock: %s", __func__, FormatStateMessage(state));
     if (!ContextualCheckBlock(block, state, chainparams.GetConsensus(), pindexPrev))
         return error("%s: Consensus::ContextualCheckBlock: %s", __func__, FormatStateMessage(state));
-    if (!::ChainstateActive().ConnectBlock(block, state, &indexDummy, viewNew, chainparams, true, true))
+    if (!::ChainstateActive().ConnectBlock(block, state, &indexDummy, viewNew, chainparams, true))
         return false;
     assert(state.IsValid());
 
@@ -4173,35 +4159,12 @@ CBlockIndex * BlockManager::InsertBlockIndex(const uint256& hash)
     return pindexNew;
 }
 
-void BlockManager::InsertPoSIndex(const uint256& hash)
-{
-    AssertLockHeld(cs_main);
-
-    if (hash.IsNull())
-        return;
-
-    // Check if exists
-    if (std::find(m_pos_index.begin(), m_pos_index.end(), hash) != m_pos_index.end())
-        return;
-
-    // Create new
-    m_pos_index.push_back(hash);
-}
-
 bool BlockManager::LoadBlockIndex(
     const Consensus::Params& consensus_params,
     CBlockTreeDB& blocktree,
     std::set<CBlockIndex*, CBlockIndexWorkComparator>& block_index_candidates)
 {
-    if (!blocktree.LoadBlockIndexGuts(
-        consensus_params,
-        [this](const uint256& hash) EXCLUSIVE_LOCKS_REQUIRED(cs_main) {
-            CBlockIndex* idx = this->InsertBlockIndex(hash);
-            if (!hash.IsNull() && !(idx->nStatus & BLOCK_FAILED_MASK)) {
-                this->InsertPoSIndex(idx->hashProofOfStake);
-            }
-            return idx;
-        }))
+    if (!blocktree.LoadBlockIndexGuts(consensus_params, [this](const uint256& hash) EXCLUSIVE_LOCKS_REQUIRED(cs_main) { return this->InsertBlockIndex(hash); }))
         return false;
 
     // Calculate nChainWork
