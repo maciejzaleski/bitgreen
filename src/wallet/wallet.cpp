@@ -3100,10 +3100,15 @@ bool CWallet::CreateTransaction(interfaces::Chain::Lock& locked_chain, const std
 
                 // vouts to the payees
                 coin_selection_params.tx_noinputs_size = 11; // Static vsize overhead + outputs vsize. 4 nVersion, 4 nLocktime, 1 input count, 1 output count, 1 witness overhead (dummy, flag, stack size)
-                if (!coin_control.fSplitUTXO) {
-                    for (const auto& recipient : vecSend)
-                    {
-                        CTxOut txout(recipient.nAmount, recipient.scriptPubKey);
+
+                for (const auto& recipient : vecSend)
+                {
+                    int nSplitUTXO = 1;
+                    if (coin_control.fSplitUTXO && coin_control.nSplitUTXO > 0)
+                        nSplitUTXO = coin_control.nSplitUTXO;
+
+                    for (int i = 0; i < nSplitUTXO; i++) {
+                        CTxOut txout(recipient.nAmount / nSplitUTXO, recipient.scriptPubKey);
 
                         if (recipient.fSubtractFeeFromAmount)
                         {
@@ -3134,22 +3139,8 @@ bool CWallet::CreateTransaction(interfaces::Chain::Lock& locked_chain, const std
                         }
                         txNew.vout.push_back(txout);
                     }
-                } else //UTXO Splitter Transaction
-                {
-                    int nSplitUTXO;
-
-                    nSplitUTXO = coin_control.nSplitUTXO;
-
-                    for (const auto& recipient : vecSend) {
-                        for (int i = 0; i < nSplitUTXO; i++) {
-                            if (i == nSplitUTXO - 1) {
-                                uint64_t nRemainder = recipient.nAmount % nSplitUTXO;
-                                txNew.vout.push_back(CTxOut((recipient.nAmount / nSplitUTXO) + nRemainder, recipient.scriptPubKey));
-                            } else
-                                txNew.vout.push_back(CTxOut(recipient.nAmount / nSplitUTXO, recipient.scriptPubKey));
-                        }
-                    }
                 }
+
                 // Choose coins to use
                 bool bnb_used;
                 if (pick_new_inputs) {
