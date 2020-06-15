@@ -484,7 +484,7 @@ public:
         fAllowMultiplePorts = true;
         nFulfilledRequestExpireTime = 5 * 60; // fulfilled requests expire in 5 minutes
 
-        vSporkAddresses = {"GMWbuDW6m6WCc7Zc9W3CSuviXzqPKK3eBj"};
+        vSporkAddresses = {"gprpehZBigGDp7sNMjEKY46afAd9BWtd29"};
         nMinSporkKeys = 1;
 
         checkpointData = {
