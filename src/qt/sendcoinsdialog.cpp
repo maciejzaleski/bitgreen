@@ -439,7 +439,7 @@ void SendCoinsDialog::clear()
     CoinControlDialog::coinControl()->UnSelectAll();
     ui->checkBoxCoinControlChange->setChecked(false);
     ui->lineEditCoinControlChange->clear();
-    coinControlUpdateLabels();
+    ui->checkBoxSplitUTXO->setCheckState(Qt::Unchecked);
 
     // Remove entries until only one left
     while(ui->entries->count())
