@@ -778,7 +778,7 @@ void SendCoinsDialog::splitUTXOChecked(int state)
 //UTXO splitter
 void SendCoinsDialog::splitUTXOValueEdited(const QString& text)
 {
-    QString qAfterFee = ui->labelCoinControlAfterFee->text().left(ui->labelCoinControlAfterFee->text().indexOf(" ")).replace(ASYMP_UTF8, "");
+    QString qAfterFee = ui->labelCoinControlAfterFee->text().left(ui->labelCoinControlAfterFee->text().indexOf(" ")).replace(ASYMP_UTF8, "").replace(QChar(THIN_SP_CP), "");
     CAmount nAfterFee;
     if (!ParseMoney(qAfterFee.toStdString().c_str(), nAfterFee))
         return;
