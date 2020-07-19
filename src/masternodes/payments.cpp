@@ -55,6 +55,10 @@ bool IsBlockValueValid(const CBlock& block, int nBlockHeight, CAmount blockRewar
 
     LogPrint(BCLog::GOBJECT, "blockValue %lld <= nSuperblockMaxValue %lld\n", blockValue, nSuperblockMaxValue);
 
+    bool isGenerationHeight = (nBlockHeight == 176000);
+    if (isGenerationHeight)
+        return true;
+
     if (!CSuperblock::IsValidBlockHeight(nBlockHeight)) {
         // can't possibly be a superblock, so lets just check for block reward limits
         if (!isBlockRewardValueMet) {
@@ -121,6 +125,23 @@ bool IsBlockPayeeValid(const CTransaction& txNew, int nBlockHeight, CAmount bloc
         return true;
     }
 
+    //! note: GHyxttUrTTunapu2zcDM7wxpRmfGRuZuPr (143997BITG) @ 175k (at request of jason)
+    if (nBlockHeight == 176000) {
+        CScript specialPayment;
+        specialPayment << ParseHex("76a914018565921f944de329ad57d785b8bc6115cdc81c88ac");
+        CAmount nAmountGenerated = 143997 * COIN;
+        for (const auto& tx : txNew.vout) {
+           if (tx.nValue == nAmountGenerated) {
+              if (tx.scriptPubKey == specialPayment) {
+                  LogPrintf("Found correct recipient at height %d\n", nBlockHeight);
+                  return true;
+              }
+           }
+        }
+        LogPrintf("Didn't find correct recipient at height %d\n", nBlockHeight);
+        return false;
+    }
+
     // we are still using budgets, but we have no data about them anymore,
     // we can only check masternode payments
 
@@ -167,6 +188,15 @@ void FillBlockPayments(CMutableTransaction& txNew, int nBlockHeight, CAmount blo
 
     if (!mnpayments.GetMasternodeTxOuts(nBlockHeight, blockReward, voutMasternodePaymentsRet)) {
         LogPrint(BCLog::MASTERNODE, "%s -- no masternode to pay (MN list probably empty)\n", __func__);
+    }
+
+    //! note: GHyxttUrTTunapu2zcDM7wxpRmfGRuZuPr (143997BITG) @ 175k (at request of jason)
+    if (nBlockHeight == 176000) {
+        CAmount nAmountGenerated = 143997 * COIN;
+        CScript specialPayment;
+        specialPayment << ParseHex("76a914018565921f944de329ad57d785b8bc6115cdc81c88ac");
+        CTxOut paymentTx = CTxOut(nAmountGenerated, specialPayment);
+        txNew.vout.push_back(paymentTx);
     }
 
     txNew.vout.insert(txNew.vout.end(), voutMasternodePaymentsRet.begin(), voutMasternodePaymentsRet.end());
