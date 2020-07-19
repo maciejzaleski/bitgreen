@@ -14,6 +14,7 @@
 #include <string>
 
 typedef std::map<int, int64_t> stakeMinimumHeights;
+typedef std::map<int, int> stakeWeightHeights;
 
 namespace Consensus {
 
@@ -178,6 +179,9 @@ struct Params {
 
     // min stake amount activated at height
     stakeMinimumHeights heightDefinitions;
+
+    // stake weight activated at height
+    stakeWeightHeights weightDefinitions;
 
     // llmq def/heights
     std::map<LLMQType, LLMQParams> llmqs;

@@ -166,6 +166,8 @@ public:
         consensus.nStakeEnforcement = 70000;
         consensus.nMinStakeHistory = 360;
         consensus.heightDefinitions = {{ {  70000,  200 * COIN } }};
+        consensus.weightDefinitions = {{ {      0,  200 },
+                                         { 175000, 1000 } }};
 
         // Governance
         consensus.nSuperblockCycle = 20571; // ~(60*24*30)/2.1, actual number of blocks per month is 262800 / 12 = 21900
