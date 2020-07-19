@@ -13,6 +13,8 @@
 #include <map>
 #include <string>
 
+typedef std::map<int, int64_t> stakeMinimumHeights;
+
 namespace Consensus {
 
 enum DeploymentPos
@@ -172,9 +174,12 @@ struct Params {
     int nMinStakeHistory;
     int nStakeEnforcement;
     int StakeEnforcement() const { return nStakeEnforcement; }
-    CAmount MinStakeAmount() const { return nMinStakeAmount; }
     int MinStakeHistory() const { return nMinStakeHistory; }
 
+    // min stake amount activated at height
+    stakeMinimumHeights heightDefinitions;
+
+    // llmq def/heights
     std::map<LLMQType, LLMQParams> llmqs;
     LLMQType llmqChainLocks;
     LLMQType llmqForInstantSend{LLMQ_NONE};

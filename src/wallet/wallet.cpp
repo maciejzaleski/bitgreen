@@ -5221,13 +5221,21 @@ bool CWallet::CreateCoinStake(unsigned int nBits,
     if (GetAdjustedTime() <= ChainActive().Tip()->nTime)
         MilliSleep(10000);
 
+    //! grab height to test minstakeamount
+    int nCurrentHeight = ::ChainActive().Height();
+    CAmount nMinimumStakeAmount = 0 * COIN;
+    for (auto stakeMin : Params().GetConsensus().heightDefinitions) {
+         if (nCurrentHeight >= stakeMin.first)
+             nMinimumStakeAmount = stakeMin.second;
+    }
+
     for (const COutput& out : setStakeCoins) {
         //
         // additional staking consensus checks
         //
 
         // dont choose inputs smaller than this
-        if (out.tx->tx->vout[out.i].nValue < Params().GetConsensus().MinStakeAmount())
+        if (out.tx->tx->vout[out.i].nValue < nMinimumStakeAmount)
             continue;
 
         // check for min age

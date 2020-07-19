@@ -321,9 +321,18 @@ bool CheckStakeKernelHash(unsigned int nBits, CBlockIndex* pindexPrev, const CBl
     bnTargetPerCoinDay.SetCompact(nBits);
     CAmount nValueIn = txPrev->vout[prevout.n].nValue;
 
-    //! enforce minimum stake amount
-    if (nValueIn < Params().GetConsensus().MinStakeAmount() && fHardenedChecks) {
-        LogPrintf("Minimum stake amount is %d, amount found was %d\n", Params().GetConsensus().MinStakeAmount()/COIN, nValueIn/COIN);
+    //! lookup minimum stake amount at height
+    CAmount nMinimumStakeAmount = 0 * COIN;
+    for (auto stakeMin : Params().GetConsensus().heightDefinitions) {
+         if (pindexPrev->nHeight+1 >= stakeMin.first)
+             nMinimumStakeAmount = stakeMin.second;
+    }
+
+    // LogPrintf("at height %d minstakeamt is %llu\n", pindexPrev->nHeight+1, nMinimumStakeAmount);
+
+    //! enforce this amount
+    if (nValueIn < nMinimumStakeAmount && fHardenedChecks) {
+        LogPrintf("Minimum stake amount is %d, amount found was %d\n", nMinimumStakeAmount/COIN, nValueIn/COIN);
         return false;
     }
 

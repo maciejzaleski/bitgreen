@@ -164,8 +164,8 @@ public:
 
         // Stake constants
         consensus.nStakeEnforcement = 70000;
-        consensus.nMinStakeAmount = 200 * COIN;
         consensus.nMinStakeHistory = 360;
+        consensus.heightDefinitions = {{ {  70000,  200 * COIN } }};
 
         // Governance
         consensus.nSuperblockCycle = 20571; // ~(60*24*30)/2.1, actual number of blocks per month is 262800 / 12 = 21900
@@ -306,8 +306,8 @@ public:
 
         // Stake constants
         consensus.nStakeEnforcement = 200;
-        consensus.nMinStakeAmount = 1 * COIN;
         consensus.nMinStakeHistory = 10;
+        consensus.heightDefinitions = {{ {    200, 1 * COIN } }};
 
         // Governance
         consensus.nSuperblockCycle = 24; // Superblocks can be issued hourly on testnet
@@ -428,6 +428,9 @@ public:
         consensus.nRuleChangeActivationThreshold = 108; // 75% for testchains
         consensus.nMinerConfirmationWindow = 144;       // Faster than normal for regtest (144 instead of 2016)
         consensus.nMasternodeMinimumConfirmations = 1;
+
+        //! stake constants
+        consensus.heightDefinitions = {{ {    200, 1 * COIN } }};
 
         // Governance
         consensus.nSuperblockCycle = 10;
