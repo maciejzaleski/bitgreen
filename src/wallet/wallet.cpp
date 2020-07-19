@@ -5190,6 +5190,10 @@ bool CWallet::CreateCoinStake(unsigned int nBits,
 
     txNew.nType = TRANSACTION_STAKE;
 
+    //! grab latest height/age definitions
+    int nStakeMinAge, nStakeMaxAge;
+    RetrieveStakeAgeHeights(::ChainActive().Height(), nStakeMinAge, nStakeMaxAge);
+
     // Mark coin stake transaction
     CScript scriptEmpty;
     scriptEmpty.clear();
@@ -5242,7 +5246,7 @@ bool CWallet::CreateCoinStake(unsigned int nBits,
         if (out.nDepth < Params().GetConsensus().MinStakeHistory())
             continue;
 
-        if (GetAdjustedTime() - out.tx->GetTxTime() < Params().GetConsensus().nStakeMinAge)
+        if (GetAdjustedTime() - out.tx->GetTxTime() < nStakeMinAge)
             continue;
 
         //make sure that enough time has elapsed between
@@ -5259,7 +5263,7 @@ bool CWallet::CreateCoinStake(unsigned int nBits,
         CBlockHeader block = pindex->GetBlockHeader();
 
         static int nMaxStakeSearchInterval = 60;
-        if (block.GetBlockTime() + Params().GetConsensus().nStakeMinAge > nTxNewTime - nMaxStakeSearchInterval)
+        if (block.GetBlockTime() + nStakeMinAge > nTxNewTime - nMaxStakeSearchInterval)
             continue; // only count coins meeting min age requirement
 
         nTxNewTime = GetAdjustedTime();
@@ -5435,8 +5439,12 @@ bool CWallet::MintableCoins()
     LOCK2(cs_main, cs_wallet);
     AvailableCoins(*locked_chain, vCoins, true);
 
+    //! grab latest height/age definitions
+    int nStakeMinAge, nStakeMaxAge;
+    RetrieveStakeAgeHeights(::ChainActive().Height(), nStakeMinAge, nStakeMaxAge);
+
     for (const COutput& out : vCoins)
-        if (GetAdjustedTime() - out.tx->GetTxTime() > Params().GetConsensus().nStakeMinAge)
+        if (GetAdjustedTime() - out.tx->GetTxTime() > nStakeMinAge)
             return true;
 
     return false;

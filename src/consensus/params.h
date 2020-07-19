@@ -15,6 +15,7 @@
 
 typedef std::map<int, int64_t> stakeMinimumHeights;
 typedef std::map<int, int> stakeWeightHeights;
+typedef std::map<int, int> coinAgeHeights;
 
 namespace Consensus {
 
@@ -165,8 +166,6 @@ struct Params {
     int nLastPoWBlock;
     int64_t nPosTargetSpacing;
     int64_t nPosTargetTimespan;
-    int nStakeMinAge;
-    int nStakeMaxAge;
     int nCoinbaseMaturity;
     int nModifierInterval;
 
@@ -182,6 +181,10 @@ struct Params {
 
     // stake weight activated at height
     stakeWeightHeights weightDefinitions;
+
+    // stake min/max age set at height
+    coinAgeHeights minAgeDefinitions;
+    coinAgeHeights maxAgeDefinitions;
 
     // llmq def/heights
     std::map<LLMQType, LLMQParams> llmqs;
