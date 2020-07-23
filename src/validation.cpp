@@ -1101,8 +1101,12 @@ CAmount GetBlockSubsidy(int nHeight, const Consensus::Params& consensusParams, b
     // Subsidy is cut in half every 525,600 blocks which will occur approximately every 2 years.
     nSubsidy >>= halvings;
 
-    // Hard fork to reduce the block reward by 10 extra percent (allowing budget/superblocks)
-    CAmount nSuperblockPart = (nHeight >= consensusParams.nBudgetPaymentsStartBlock) ? nSubsidy/10 : 0;
+    // Hard fork to reduce the block reward by 10 extra percent, then later on 20 (at 175000 onwards)
+    CAmount nSuperblockPart = 0;
+    if (nHeight < 175000)
+        nSuperblockPart = (nHeight >= consensusParams.nBudgetPaymentsStartBlock) ? nSubsidy/10 : 0; //! equiv 10% (ie. 20 / 10 = 2, or 10% of 20 is 2)
+    else
+        nSuperblockPart = nSubsidy/5;                                                               //! equiv 20% (ie. 20 / 5 = 4,  or 20% of 20 is 4)
 
     return fSuperblockPartOnly ? nSuperblockPart : nSubsidy - nSuperblockPart;
 }
@@ -5276,8 +5280,7 @@ bool GetBlockHash(uint256& hashRet, int nBlockHeight)
 
 int ActiveProtocol()
 {
-    if (ChainActive().Tip()->nHeight >= BLOCKHEIGHT_PROTO_VERSION_V15)
-        return MIN_PEER_PROTO_VERSION_V15;
-
-    return MIN_PEER_PROTO_VERSION;
+    if (ChainActive().Tip()->nHeight >= 175000)
+        return MIN_PEER_PROTO_VERSION;
+    return 70216;
 }

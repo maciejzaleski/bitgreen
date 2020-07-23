@@ -13,6 +13,10 @@
 #include <map>
 #include <string>
 
+typedef std::map<int, int64_t> stakeMinimumHeights;
+typedef std::map<int, int> stakeWeightHeights;
+typedef std::map<int, int> coinAgeHeights;
+
 namespace Consensus {
 
 enum DeploymentPos
@@ -162,8 +166,6 @@ struct Params {
     int nLastPoWBlock;
     int64_t nPosTargetSpacing;
     int64_t nPosTargetTimespan;
-    int nStakeMinAge;
-    int nStakeMaxAge;
     int nCoinbaseMaturity;
     int nModifierInterval;
 
@@ -172,9 +174,19 @@ struct Params {
     int nMinStakeHistory;
     int nStakeEnforcement;
     int StakeEnforcement() const { return nStakeEnforcement; }
-    CAmount MinStakeAmount() const { return nMinStakeAmount; }
     int MinStakeHistory() const { return nMinStakeHistory; }
 
+    // min stake amount activated at height
+    stakeMinimumHeights heightDefinitions;
+
+    // stake weight activated at height
+    stakeWeightHeights weightDefinitions;
+
+    // stake min/max age set at height
+    coinAgeHeights minAgeDefinitions;
+    coinAgeHeights maxAgeDefinitions;
+
+    // llmq def/heights
     std::map<LLMQType, LLMQParams> llmqs;
     LLMQType llmqChainLocks;
     LLMQType llmqForInstantSend{LLMQ_NONE};

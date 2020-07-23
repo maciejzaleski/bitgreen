@@ -34,6 +34,21 @@ static bool GetLastStakeModifier(const CBlockIndex* pindex, uint64_t& nStakeModi
     return error("%s: no generation at genesis block", __func__);
 }
 
+// Get stake min/max age at height
+void RetrieveStakeAgeHeights(int nHeight, int& nStakeMinAge, int& nStakeMaxAge)
+{
+    nStakeMinAge = 0;
+    nStakeMaxAge = 0;
+    for (auto minAge : Params().GetConsensus().minAgeDefinitions) {
+         if (nHeight >= minAge.first)
+             nStakeMinAge = minAge.second;
+    }
+    for (auto maxAge : Params().GetConsensus().maxAgeDefinitions) {
+         if (nHeight >= maxAge.first)
+             nStakeMaxAge = maxAge.second;
+    }
+}
+
 // Get selection interval section (in seconds)
 static int64_t GetStakeModifierSelectionIntervalSection(int nSection)
 {
@@ -221,6 +236,10 @@ static bool GetKernelStakeModifierV03(CBlockIndex* pindexPrev, uint256 hashBlock
     nStakeModifierTime = pindexFrom->GetBlockTime();
     int64_t nStakeModifierSelectionInterval = GetStakeModifierSelectionInterval();
 
+    //! grab latest height/age definitions
+    int nStakeMinAge, nStakeMaxAge;
+    RetrieveStakeAgeHeights(pindexPrev->nHeight+1, nStakeMinAge, nStakeMaxAge);
+
     // we need to iterate index forward but we cannot depend on ChainActive().Next()
     // because there is no guarantee that we are checking blocks in active chain.
     // So, we construct a temporary chain that we will iterate over.
@@ -245,7 +264,7 @@ static bool GetKernelStakeModifierV03(CBlockIndex* pindexPrev, uint256 hashBlock
         pindex = (!tmpChain.empty() && pindex->nHeight >= tmpChain[0]->nHeight - 1)? tmpChain[n++] : ChainActive().Next(pindex);
         if (n > tmpChain.size() || pindex == nullptr) // check if tmpChain[n+1] exists
         {   // reached best block; may happen if node is behind on block chain
-            if (fPrintProofOfStake || (old_pindex->GetBlockTime() + params.nStakeMinAge - nStakeModifierSelectionInterval > GetAdjustedTime()))
+            if (fPrintProofOfStake || (old_pindex->GetBlockTime() + nStakeMinAge - nStakeModifierSelectionInterval > GetAdjustedTime()))
                 return error("GetKernelStakeModifier() : reached best block %s at height %d from block %s",
                     old_pindex->GetBlockHash().ToString(), old_pindex->nHeight, hashBlockFrom.ToString());
             else
@@ -297,6 +316,10 @@ bool CheckStakeKernelHash(unsigned int nBits, CBlockIndex* pindexPrev, const CBl
     const Consensus::Params& params = Params().GetConsensus();
     bool fHardenedChecks = pindexPrev->nHeight+1 > params.StakeEnforcement();
 
+    //! grab latest height/age definitions
+    int nStakeMinAge, nStakeMaxAge;
+    RetrieveStakeAgeHeights(pindexPrev->nHeight+1, nStakeMinAge, nStakeMaxAge);
+
     auto txPrevTime = blockFrom.GetBlockTime();
     if (nTimeTx < txPrevTime) {
         //! mimic legacy behaviour
@@ -308,12 +331,12 @@ bool CheckStakeKernelHash(unsigned int nBits, CBlockIndex* pindexPrev, const CBl
     }
 
     unsigned int nTimeBlockFrom = blockFrom.GetBlockTime();
-    if (nTimeBlockFrom + params.nStakeMinAge > nTimeTx) {
+    if (nTimeBlockFrom + nStakeMinAge > nTimeTx) {
         //! mimic legacy behaviour
         if (!fHardenedChecks) {
             return error("%s: min age violation", __func__);
         } else {
-            return error("%s: min age violation (nTimeBlockFrom + params.nStakeMinAge > nTimeTx)", __func__);
+            return error("%s: min age violation (nTimeBlockFrom + nStakeMinAge > nTimeTx)", __func__);
         }
     }
 
@@ -321,17 +344,34 @@ bool CheckStakeKernelHash(unsigned int nBits, CBlockIndex* pindexPrev, const CBl
     bnTargetPerCoinDay.SetCompact(nBits);
     CAmount nValueIn = txPrev->vout[prevout.n].nValue;
 
-    //! enforce minimum stake amount
-    if (nValueIn < Params().GetConsensus().MinStakeAmount() && fHardenedChecks) {
-        LogPrintf("Minimum stake amount is %d, amount found was %d\n", Params().GetConsensus().MinStakeAmount()/COIN, nValueIn/COIN);
+    //! lookup minimum stake amount at height
+    CAmount nMinimumStakeAmount = 0 * COIN;
+    for (auto stakeMin : Params().GetConsensus().heightDefinitions) {
+         if (pindexPrev->nHeight+1 >= stakeMin.first)
+             nMinimumStakeAmount = stakeMin.second;
+    }
+
+    // LogPrintf("at height %d minstakeamt is %llu\n", pindexPrev->nHeight+1, nMinimumStakeAmount);
+
+    //! enforce this amount
+    if (nValueIn < nMinimumStakeAmount && fHardenedChecks) {
+        LogPrintf("Minimum stake amount is %d, amount found was %d\n", nMinimumStakeAmount/COIN, nValueIn/COIN);
         return false;
+    }
+
+    //! lookup stake weight at height
+    int stakeWeight = 0;
+    for (auto weight : Params().GetConsensus().weightDefinitions) {
+         if (pindexPrev->nHeight+1 >= weight.first)
+             stakeWeight = weight.second;
     }
 
     // v0.3 protocol kernel hash weight starts from 0 at the 30-day min age
     // this change increases active coins participating the hash and helps
     // to secure the network when proof-of-stake difficulty is low
-    int64_t nTimeWeight = std::min<int64_t>(nTimeTx - txPrevTime, params.nStakeMaxAge - params.nStakeMinAge);
-    arith_uint256 bnCoinDayWeight = nValueIn * nTimeWeight / COIN / 200;
+    int64_t nTimeWeight = std::min<int64_t>(nTimeTx - txPrevTime, nStakeMaxAge - nStakeMinAge);
+    arith_uint256 bnCoinDayWeight = nValueIn * nTimeWeight / COIN / stakeWeight;
+
     // Calculate hash
     CDataStream ss(SER_GETHASH, 0);
     uint64_t nStakeModifier = 0;
@@ -346,7 +386,7 @@ bool CheckStakeKernelHash(unsigned int nBits, CBlockIndex* pindexPrev, const CBl
     hashProofOfStake = Hash(ss.begin(), ss.end());
 
     // Now check if proof-of-stake hash meets target protocol
-    LogPrint(BCLog::KERNEL, "%s: nValueIn=%s hashProofOfStake=%s hashTarget=%s\n", __func__, FormatMoney(nValueIn), hashProofOfStake.ToString(), (bnCoinDayWeight * bnTargetPerCoinDay).ToString());
+    LogPrint(BCLog::KERNEL, "%s: nValueIn=%s hashProofOfStake=%s hashTarget=%s activeWeight=%d\n", __func__, FormatMoney(nValueIn), hashProofOfStake.ToString(), (bnCoinDayWeight * bnTargetPerCoinDay).ToString(), stakeWeight);
 
     if (UintToArith256(hashProofOfStake) > bnCoinDayWeight * bnTargetPerCoinDay)
         return false;

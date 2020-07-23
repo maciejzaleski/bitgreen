@@ -154,8 +154,6 @@ public:
         consensus.fPowNoRetargeting = false;
         consensus.nPosTargetSpacing = 2 * 60; // PoS: 2 minutes
         consensus.nPosTargetTimespan = 60 * 40;
-        consensus.nStakeMinAge = 60 * 60 * 12; // 12 hours
-        consensus.nStakeMaxAge = 60 * 60 * 48; // 48 hours
         consensus.nModifierInterval = 60;      // Modifier interval: time to elapse before new modifier is computed (60 seconds)
         consensus.nLastPoWBlock = 1500;
         consensus.nRuleChangeActivationThreshold = 1916; // 95% of 2016
@@ -164,8 +162,14 @@ public:
 
         // Stake constants
         consensus.nStakeEnforcement = 70000;
-        consensus.nMinStakeAmount = 200 * COIN;
         consensus.nMinStakeHistory = 360;
+        consensus.minAgeDefinitions = {{ {      0,    60*60*12 },
+                                         { 175000,    60*60*24 } }};
+        consensus.maxAgeDefinitions = {{ {      0,    60*60*48 },
+                                         { 175000,    60*60*96 } }};
+        consensus.heightDefinitions = {{ {  70000,  200 * COIN } }};
+        consensus.weightDefinitions = {{ {      0,         200 },
+                                         { 175000,        1000 } }};
 
         // Governance
         consensus.nSuperblockCycle = 20571; // ~(60*24*30)/2.1, actual number of blocks per month is 262800 / 12 = 21900
@@ -296,8 +300,6 @@ public:
         consensus.fPowNoRetargeting = false;
         consensus.nPosTargetSpacing = 2 * 60; // PoS: 2 minutes
         consensus.nPosTargetTimespan = 60 * 40;
-        consensus.nStakeMinAge = 60 * 1;  // 1 minute
-        consensus.nStakeMaxAge = 60 * 60; // 1 hour
         consensus.nModifierInterval = 60; // Modifier interval: time to elapse before new modifier is computed (1 minute)
         consensus.nLastPoWBlock = 200;
         consensus.nRuleChangeActivationThreshold = 1512; // 75% for testchains
@@ -306,8 +308,8 @@ public:
 
         // Stake constants
         consensus.nStakeEnforcement = 200;
-        consensus.nMinStakeAmount = 1 * COIN;
         consensus.nMinStakeHistory = 10;
+        consensus.heightDefinitions = {{ {    200, 1 * COIN } }};
 
         // Governance
         consensus.nSuperblockCycle = 24; // Superblocks can be issued hourly on testnet
@@ -421,13 +423,14 @@ public:
         consensus.fPowNoRetargeting = true;
         consensus.nPosTargetSpacing = 2 * 60; // PoS: 2 minutes
         consensus.nPosTargetTimespan = 60 * 40;
-        consensus.nStakeMinAge = 60 * 1;  // test net min age is 1 minute
-        consensus.nStakeMaxAge = 60 * 10; // 10 minutes
         consensus.nModifierInterval = 60; // Modifier interval: time to elapse before new modifier is computed (1 minute)
         consensus.nLastPoWBlock = 1000;
         consensus.nRuleChangeActivationThreshold = 108; // 75% for testchains
         consensus.nMinerConfirmationWindow = 144;       // Faster than normal for regtest (144 instead of 2016)
         consensus.nMasternodeMinimumConfirmations = 1;
+
+        //! stake constants
+        consensus.heightDefinitions = {{ {    200, 1 * COIN } }};
 
         // Governance
         consensus.nSuperblockCycle = 10;

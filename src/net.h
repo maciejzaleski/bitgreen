@@ -23,6 +23,7 @@
 #include <sync.h>
 #include <uint256.h>
 #include <threadinterrupt.h>
+#include <validation.h>
 
 #include <atomic>
 #include <deque>
@@ -341,13 +342,13 @@ public:
     bool IsMasternodeQuorumNode(const CNode* pnode);
 
     //! Relay message only to minProtoVersion peers.
-    void RelayInv(CInv &inv, const int minProtoVersion = MIN_PEER_PROTO_VERSION);
+    void RelayInv(CInv &inv, const int minProtoVersion = ActiveProtocol());
 
     //! Relay message based to minProtoVersion peers filtered by relatedTx.
-    void RelayInvFiltered(CInv &inv, const CTransaction &relatedTx, const int minProtoVersion = MIN_PEER_PROTO_VERSION);
+    void RelayInvFiltered(CInv &inv, const CTransaction &relatedTx, const int minProtoVersion = ActiveProtocol());
 
     //! Relay message based to minProtoVersion peers filtered by relatedTxHash.
-    void RelayInvFiltered(CInv &inv, const uint256 &relatedTxHash, const int minProtoVersion = MIN_PEER_PROTO_VERSION);
+    void RelayInvFiltered(CInv &inv, const uint256 &relatedTxHash, const int minProtoVersion = ActiveProtocol());
 
 
 private:

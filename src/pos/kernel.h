@@ -14,6 +14,8 @@ class COutPoint;
 class CBlockIndex;
 class CValidationState;
 
+void RetrieveStakeAgeHeights(int nHeight, int& nStakeMinAge, int& nStakeMaxAge);
+
 // MODIFIER_INTERVAL_RATIO:
 // ratio of group interval length between the last group and the first group
 static const int MODIFIER_INTERVAL_RATIO = 3;
