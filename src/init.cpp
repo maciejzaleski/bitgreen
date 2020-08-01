@@ -1832,6 +1832,9 @@ bool AppInitMain(InitInterfaces& interfaces)
     if (gArgs.GetBoolArg("-txindex", DEFAULT_TXINDEX)) {
         g_txindex = MakeUnique<TxIndex>(nTxIndexCache, false, fReindex);
         g_txindex->Start();
+        while (!g_txindex->BlockUntilSyncedToCurrentChain()) {
+            MilliSleep(100);
+        }
     }
 
     for (const auto& filter_type : g_enabled_filter_types) {
@@ -2061,6 +2064,11 @@ bool AppInitMain(InitInterfaces& interfaces)
     // Map ports with UPnP
     if (gArgs.GetBoolArg("-upnp", DEFAULT_UPNP)) {
         StartMapPort();
+    }
+
+    // Check once more if txindex is ready..
+    while (!g_txindex->BlockUntilSyncedToCurrentChain()) {
+        MilliSleep(100);
     }
 
     CConnman::Options connOptions;
