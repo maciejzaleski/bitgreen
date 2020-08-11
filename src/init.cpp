@@ -1235,10 +1235,7 @@ bool AppInitParameterInteraction()
         dustRelayFee = CFeeRate(n);
     }
 
-    fRequireStandard = !gArgs.GetBoolArg("-acceptnonstdtxn", !chainparams.RequireStandard());
-    if (!chainparams.IsTestChain() && !fRequireStandard) {
-        return InitError(strprintf("acceptnonstdtxn is not currently supported for %s chain", chainparams.NetworkIDString()));
-    }
+    fRequireStandard = false;
     nBytesPerSigOp = gArgs.GetArg("-bytespersigop", nBytesPerSigOp);
 
     if (!g_wallet_init_interface.ParameterInteraction()) return false;
